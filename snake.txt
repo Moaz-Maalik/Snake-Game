@@ -1,0 +1,1725 @@
+[org 0x0100]
+
+jmp start
+
+snake: times 240 db 0
+lenght: dw 20
+screenpositon: times 240 dw 0
+orientation: dw 0
+tickcount: dw 0
+tickcount2: dw 0
+lives: db 3
+livesmessage: db 'Your Lives : '
+timemessage: db 'Time left : '
+minitues: db 3
+seconds: dw 60
+tickcount3: dw 0
+speed: dw 32
+score: dw 0
+scoremessage:  db 'Your Score : '
+tickcount4: dw 0
+tickcount5: dw 0
+positionoffruit: dw 0
+fruitnumber: db 1
+stagemessage: db 'Stage : '
+stage: db 0
+endgamemessage:  db 'Thankq For Playing . The Game Has Ended'
+endgamemessege2: db 'Your Final Score was : '
+
+
+
+printnumforscoreend:     
+	push bp               
+	mov  bp, sp               
+	push es               
+	push ax               
+	push bx               
+	push cx               
+	push dx               
+	push di 
+	 
+				  
+	mov  ax, 0xb800              
+	mov  es, ax                      
+	mov  ax, [bp+4]                       
+	mov  bx, 10                          
+	mov  cx, 0             
+	 
+	nextdigitforscoreend:    
+		mov  dx, 0                             
+		div  bx                            
+		add  dl, 0x30                     
+		push dx                             
+		inc  cx                          
+		cmp  ax, 0                        
+		jnz  nextdigitforscoreend          
+		mov  di, 2184   
+
+
+	nextposforscoreend:      
+		pop  dx                             
+		mov  dh, 0x04                        
+		mov [es:di], dx                    
+		add  di, 2                          
+		loop nextposforscoreend           
+
+	pop  di               
+	pop  dx               
+	pop  cx               
+	pop  bx               
+	pop  ax               
+	pop  es               
+	pop  bp               
+	ret  2 
+
+
+
+endofgamescreen:
+	pusha
+	
+	call clrscr
+	
+	mov ax,0xb800
+	mov es,ax
+	
+	mov ah,0x03
+	
+	mov cx,39
+	mov di,1960
+	mov bx,0
+	loopforendofgamescreen:
+		mov al,[cs:endgamemessage+bx]
+		mov word[es:di],ax
+		add bx,1
+		add di,2
+		loop loopforendofgamescreen
+	
+	mov cx,22
+	mov di,2138
+	mov bx,0
+	
+	loopforendofgamescreen2:
+		mov al,[cs:endgamemessege2+bx]
+		mov word[es:di],ax
+		add bx,1
+		add di,2
+		loop loopforendofgamescreen2
+	
+
+	mov ax,[cs:score]
+	push ax
+	
+	call printnumforscoreend
+	
+	popa
+	ret
+
+
+sound: 
+	
+	pusha
+    in al, 61h 
+    push ax  
+
+    mov bx, 6818
+
+    mov al, 6Bh  
+    out 43h, al 
+
+    mov ax, BX 
+
+    out 24h, al  
+    mov al, ah  
+    out 42h, al  
+
+    in al, 61h   
+    or al, 3h      
+    out 61h, al  
+
+    mov cx, 03h 
+
+    mov dx,0D04h
+
+    mov ax, 86h
+
+    int 15h        
+    pop ax
+    out 61h, al
+	popa
+    ret
+
+printsnakeforstage1:
+	pusha
+	
+	mov ax,0xb800
+	mov es,ax
+	
+	mov di,2020
+	mov cx,[cs:lenght]
+	
+	mov bx,[cs:lenght]
+	dec bx
+	mov ah,0x06
+	mov si,[cs:lenght]
+	shl si,1
+	sub si,2
+	loopforprintsnakeforstage1:
+		mov al,[cs:snake+bx]
+		mov word[es:di],ax
+		mov word[cs:screenpositon+si],di
+		dec bx
+		sub di,2
+		sub si,2
+		loop loopforprintsnakeforstage1
+	
+	
+	
+	
+	popa
+	ret
+	
+printsnakeforstage2:
+	pusha
+	
+	mov ax,0xb800
+	mov es,ax
+	
+	mov di,2040
+	mov word cx,[cs:lenght]
+	
+	mov bx,[cs:lenght]
+	dec bx
+	mov ah,0x06
+	mov si,[cs:lenght]
+	shl si,1
+	sub si,2
+	loopforprintsnakeforstage2:
+		mov al,[cs:snake+bx]
+		mov word[es:di],ax
+		mov word[cs:screenpositon+si],di
+		dec bx
+		sub di,2
+		sub si,2
+		loop loopforprintsnakeforstage2
+	
+	
+	
+	
+	popa
+	ret
+	
+
+resetwithoutlivesandtime:
+	pusha
+	call clrscr
+	call printboarders
+	
+	cmp byte[cs:stage],1
+	jne checkifstage2
+	call printsnakeforstage1
+	
+	checkifstage2:
+		cmp byte[cs:stage],2
+		jne continueresetwithout
+		call printsnakeforstage2
+	
+	
+	continueresetwithout:
+	;call initializesnake
+	;call printsnake
+	
+	call printstage
+	
+	call generaterandom
+	call printfruit
+	
+	;mov word[cs:speed],32
+	mov word[cs:orientation],1
+	
+	call printscore
+	
+	
+	call printlives
+	
+	call printtime
+	
+	
+	
+	endofresetwithout:
+		popa
+		ret
+
+
+printhurdel2:
+
+	pusha
+	
+	call printhurdel1
+	
+	mov ax,0xb800
+	mov es,ax
+	
+	mov di,2886
+	mov cx,10
+	
+	mov ah,0x09
+	mov al,'$'
+	
+	loopforprinthurdel2:
+		mov word[es:di],ax
+		add di,2
+		loop loopforprinthurdel2
+	
+	mov di,2886
+	mov cx,5
+	
+	mov ah,0x09
+	mov al,'$'
+	
+	loopforprinthurdel20:
+		mov word[es:di],ax
+		sub di,160
+		loop loopforprinthurdel20
+	
+	
+	
+	popa
+	ret
+
+
+printhurdel1:
+	pusha
+	
+	mov ax,0xb800
+	mov es,ax
+	
+	mov di,2140
+	mov cx,20
+	
+	mov ah,0x09
+	mov al,'$'
+	
+	loopforprinthurdel1:
+		mov word[es:di],ax
+		add di,2
+		loop loopforprinthurdel1
+	
+	
+	popa
+	ret
+
+printstage:
+	pusha
+	
+	mov ax,0xb800
+	mov es,ax
+	
+	mov ah,0x03
+	
+	mov cx,8
+	mov di,3914
+	mov bx,0
+	loopforprintstage:
+		mov al,[cs:stagemessage+bx]
+		mov word[es:di],ax
+		add bx,1
+		add di,2
+		loop loopforprintstage
+	
+	mov al,[cs:stage]
+	add al,0x30
+	mov ah,0x04
+	
+	mov word[es:di],ax
+	
+	
+	popa
+	ret
+
+
+generaterandom:
+	pusha
+	
+	mov ax,0xb800
+	mov es,ax
+	
+	mov ax,[cs:tickcount4]
+	shl ax,1
+	
+	mov cx,[cs:tickcount5]
+	
+	loopforgeneraterandom:
+		add ax,160
+		loop loopforgeneraterandom
+	
+	checkifnotspace:
+		mov bx,ax
+		cmp word[es:bx],0x0720
+		je storepositionoffruit
+		inc word[cs:tickcount4]
+		inc word[cs:tickcount5]
+		
+		checktickcount4a:
+			cmp word[cs:tickcount4],76
+			jne checktickcount5a
+			mov word[cs:tickcount4],4
+		checktickcount5a:
+			cmp word[cs:tickcount5],22
+			jne generaterandomagain
+			mov word[cs:tickcount5],4
+			generaterandomagain:
+				mov ax,[cs:tickcount4]
+				shl ax,1
+	
+				mov cx,[cs:tickcount5]
+	
+				loopforgeneraterandomagain:
+					add ax,160
+					loop loopforgeneraterandomagain
+				mov bx,ax
+				cmp word[es:bx],0x0720
+				je storepositionoffruit
+				inc word[cs:tickcount4]
+				inc word[cs:tickcount5]
+				jmp checktickcount4a
+	
+	storepositionoffruit:
+		mov word[cs:positionoffruit],ax
+	
+	popa
+	ret
+
+
+printfruit:
+	pusha
+	inc byte[cs:fruitnumber]
+	
+	cmp byte[cs:fruitnumber],5
+	jne	continueprintingfruit
+	mov byte[cs:fruitnumber],1
+	
+	continueprintingfruit:
+	mov ax,0xb800
+	mov es,ax
+	
+	mov ah,0x04
+	
+	mov di,[cs:positionoffruit]
+	
+	checkfruit1:
+		cmp byte[cs:fruitnumber],1
+		jne checkfruit2
+		mov al,'@'
+		
+	checkfruit2:
+		cmp byte[cs:fruitnumber],2
+		jne checkfruit3
+		mov al,'&'
+		
+	checkfruit3:
+		cmp byte[cs:fruitnumber],3
+		jne checkfruit4
+		mov al,'%'
+		
+	checkfruit4:
+		cmp byte[cs:fruitnumber],4
+		jne endofprintfruit
+		mov al,'#'
+	
+	
+	endofprintfruit:
+		mov word[es:di],ax
+	
+	popa
+	ret
+
+
+printscore:
+	pusha
+	
+	
+	mov ax,0xb800
+	mov es,ax
+	
+	mov cx,13
+	mov di,278
+	mov ah,0x03
+	mov bx,0
+	loopforscoremessage:
+		mov al,[cs:scoremessage+bx]
+		mov word[es:di],ax
+		add di,2
+		inc bx
+		loop loopforscoremessage
+	
+	
+	mov ax,[cs:score]
+	
+	push ax
+	
+	call printnumforscore
+	
+	
+	popa
+	ret
+
+
+printnumforscore:     
+	push bp               
+	mov  bp, sp               
+	push es               
+	push ax               
+	push bx               
+	push cx               
+	push dx               
+	push di 
+	 
+				  
+	mov  ax, 0xb800              
+	mov  es, ax                          
+	mov  ax, [bp+4]                      
+	mov  bx, 10                          
+	mov  cx, 0              
+	 
+	nextdigitforscore:    
+		mov  dx, 0                         
+		div  bx                            
+		add  dl, 0x30                      
+		push dx                            
+		inc  cx                                
+		cmp  ax, 0                      
+		jnz  nextdigitforscore          
+		mov  di, 304   
+
+
+	nextposforscore:      
+		pop  dx                             
+		mov  dh, 0x04                    
+		mov [es:di], dx                    
+		add  di, 2                            
+		loop nextposforscore            
+
+	pop  di               
+	pop  dx               
+	pop  cx               
+	pop  bx               
+	pop  ax               
+	pop  es               
+	pop  bp               
+	ret  2 
+
+
+
+
+increasespeed:
+	pusha
+	
+	cmp word[cs:speed],1
+	je endofincreasespeed
+	
+	cmp word[cs:speed],2
+	jne cmpfor4
+	mov word[cs:speed],1
+	jmp endofincreasespeed
+	
+	cmpfor4:
+		cmp word[cs:speed],4
+		jne cmpfor8
+		mov word[cs:speed],2
+		jmp endofincreasespeed
+		
+	cmpfor8:
+		cmp word[cs:speed],8
+		jne cmpfor32
+		mov word[cs:speed],4
+		jmp endofincreasespeed
+	
+	cmpfor32:
+		cmp word[cs:speed],32
+		jne cmpfor16
+		mov word[cs:speed],16
+		jmp endofincreasespeed
+	
+	cmpfor16:
+		cmp word[cs:speed],16
+		jne endofincreasespeed
+		mov word[cs:speed],8
+	
+	endofincreasespeed:
+		popa
+		ret
+
+
+printnum:     
+	push bp               
+	mov  bp, sp               
+	push es               
+	push ax               
+	push bx               
+	push cx               
+	push dx               
+	push di 
+	 
+				  
+	mov  ax, 0xb800              
+	mov  es, ax                          
+	mov  ax, [bp+4]                      
+	mov  bx, 10                          
+	mov  cx, 0              
+	 
+	nextdigit:    
+		mov  dx, 0                            
+		div  bx                               
+		add  dl, 0x30                 
+		push dx                             
+		inc  cx                             
+		cmp  ax, 0                         
+		jnz  nextdigit         
+		mov  di, 248   
+
+
+	nextpos:      
+		pop  dx                        
+		mov  dh, 0x04                        
+		mov [es:di], dx                    
+		add  di, 2                            
+		loop nextpos            
+
+	pop  di               
+	pop  dx               
+	pop  cx               
+	pop  bx               
+	pop  ax               
+	pop  es               
+	pop  bp               
+	ret  2 
+
+
+
+printtime:
+	pusha
+	mov ax,0xb800
+	mov es,ax
+	
+	mov cx,12
+	mov di,220
+	mov ah,0x03
+	mov bx,0
+	loopfortimemessage:
+		mov al,[cs:timemessage+bx]
+		mov word[es:di],ax
+		add di,2
+		inc bx
+		loop loopfortimemessage
+	
+	mov ah,0x04
+	mov al,[cs:minitues]
+	add al,0x30
+	mov word[es:di],ax
+	
+	mov ah,0x04
+	mov al,':'
+	mov word[es:di+2],ax
+	
+	mov ax,[cs:seconds]
+	
+	cmp word[cs:seconds],9
+	jbe printsimpleseconds
+	push ax
+	call printnum
+	jmp endofprintnum
+	
+	printsimpleseconds:	
+		mov bx,[cs:seconds]
+		mov al,bl
+		add al,0x30
+		mov ah,0x04
+		mov bh,0x04
+		mov bl,'0'
+		mov word[es:di+4],bx
+		mov word[es:di+6],ax
+	
+	endofprintnum:
+		popa
+		ret
+
+printlives:
+	pusha
+	mov ax,0xb800
+	mov es,ax
+	
+	mov cx,13
+	mov di,160
+	mov ah,0x03
+	mov bx,0
+	loopforlivesmessage:
+		mov al,[cs:livesmessage+bx]
+		mov word[es:di],ax
+		add di,2
+		inc bx
+		loop loopforlivesmessage
+	
+	mov ah,0x04
+	mov al,[cs:lives]
+	add al,0x30
+	
+	mov word[es:di],ax
+
+	popa
+	ret
+
+extendlength:
+	pusha
+	
+	mov cx,[cs:lenght]
+	mov bx,[cs:lenght]
+	sub bx,1
+		
+	loopforextendlength:
+		mov al,[cs:snake+bx]
+		mov [cs:snake+bx+4],al
+		dec bx
+		loop loopforextendlength
+		
+		
+		
+	mov cx,[cs:lenght]
+	mov bx,[cs:lenght]
+	shl bx,1
+	sub bx,2
+
+	
+	loopforextendlengthofscreenpositon:
+		mov ax,[cs:screenpositon+bx]
+		mov word[cs:screenpositon+bx+8],ax
+		sub bx,2
+		loop loopforextendlengthofscreenpositon
+		
+		
+	add word[cs:lenght],4
+	
+	
+	
+	popa
+	ret
+	
+reset:
+	pusha
+	call clrscr
+	call printboarders
+	call initializesnake
+	call printsnake
+	
+	continuerest:
+	mov byte[cs:stage],0
+	call printstage
+	
+	call generaterandom
+	call printfruit
+	
+	mov word[cs:speed],32
+	mov word[cs:orientation],1
+	
+	
+	mov byte al,[cs:lives]
+	sub al,1
+	mov byte[cs:lives],al
+	call printlives
+	
+	cmp byte[cs:lives],0
+	jne printingnormaltime
+	call endofgamescreen
+	jmp endofreset
+	
+	
+	
+	printingnormaltime:
+		mov word[cs:seconds],60
+		mov byte[cs:minitues],3
+		call printtime
+		
+	mov word[cs:score],0
+	call printscore
+	
+	endofreset:
+		popa
+		ret
+clrscr: 
+	push es
+	push ax
+	push cx
+	push di
+
+	mov ax, 0xb800
+	mov es, ax 
+
+	xor di, di 
+	mov ax, 0x0720 
+	mov cx, 2000 
+	
+	cld 
+	rep stosw 
+
+	pop di
+	pop cx
+	pop ax
+	pop es
+	
+	ret
+
+printboarders:
+	pusha
+	mov ax,0xb800
+	mov es,ax
+	
+	mov di,480
+	mov cx,160
+	mov ah,0x09
+	mov al,'$'
+	printupperboarder:
+		mov word[es:di],ax
+		add di,2
+		dec cx
+		loop printupperboarder
+
+	mov di,3520	
+	mov cx,160
+	printlowerboarder:
+		mov word[es:di],ax
+		add di,2
+		dec cx
+		loop printlowerboarder
+	
+	mov di,480	
+	mov cx,20
+	printleftboarder:
+		mov word[es:di],ax
+		add di,160
+		loop printleftboarder
+	
+	mov di,638	
+	mov cx,20
+	printrightboarder:
+		mov word[es:di],ax
+		add di,160
+		loop printrightboarder
+
+	
+	
+	popa
+	ret
+	
+printsnake:
+	pusha
+	
+	mov ax,0xb800
+	mov es,ax
+	
+	mov di,1980
+	mov word cx,[cs:lenght]
+	
+	mov bx,0
+	mov ah,0x06
+	mov si,0
+	loopforprintsnake:
+		mov al,[cs:snake+bx]
+		mov word[es:di],ax
+		mov word[cs:screenpositon+si],di
+		inc bx
+		add di,2
+		add si,2
+		loop loopforprintsnake
+	
+	
+	
+	
+	popa
+	ret
+initializesnake:
+	pusha
+	
+	mov word[cs:lenght],20
+	mov cx,20
+	
+	mov byte[cs:snake+19],'+'
+	dec cx
+	
+	mov bx,0
+	
+	loopforinitializesnake:
+		mov byte[cs:snake+bx],'-'
+		inc bx
+		loop loopforinitializesnake
+		
+	
+	
+	
+	popa
+	ret
+
+movright:
+	pusha
+	
+	mov ax,0xb800
+	mov es,ax
+	
+	cmp word[cs:orientation],3
+	je endofmovright
+		
+	mov word si,[cs:lenght]
+	shl si,1
+	sub si,2
+	colissioncheckright:
+		mov ah,0x09
+		mov al,'$'
+		mov di,[cs:screenpositon+si] 
+		cmp ax,[es:di+2]
+		jne colissioncheckrightitself
+		call sound
+		call reset
+		jmp endofmovright
+		
+	colissioncheckrightitself:
+		mov ah,0x06
+		mov al,'-'
+		mov di,[cs:screenpositon+si] 
+		cmp ax,[es:di+2]
+		jne colissioncheckrightfruit
+		call sound
+		call reset
+		jmp endofmovright
+	
+	colissioncheckrightfruit:
+		mov ah,0x04
+		checkfruit1forright:
+			cmp byte[cs:fruitnumber],1
+			jne checkfruit2forright
+			mov al,'@'
+			
+		checkfruit2forright:
+			cmp byte[cs:fruitnumber],2
+			jne checkfruit3forright
+			mov al,'&'
+			
+		checkfruit3forright:
+			cmp byte[cs:fruitnumber],3
+			jne checkfruit4forright
+			mov al,'%'
+			
+		checkfruit4forright:
+			cmp byte[cs:fruitnumber],4
+			jne continuecolissioncheckrightfruit
+			mov al,'#'
+		
+		continuecolissioncheckrightfruit:
+		mov di,[cs:screenpositon+si] 
+		cmp ax,[es:di+2]
+		jne continuetomoveright
+		call sound
+		inc word[cs:score]
+		call generaterandom
+		call printfruit
+		call extendlength
+		
+		mov si,[cs:screenpositon+8] 
+		mov di,[cs:screenpositon+10] 
+			
+		sub di,si
+
+		checkupforrightfruit:
+			cmp di,160
+			jne checkdownforrightfruit
+			mov cx,4
+			mov ah,0x06
+			mov al,'-'
+			mov bx,6
+			placeupforrightfruit:
+				sub si,160
+				mov word[es:si],ax
+				mov [cs:screenpositon+bx],si
+				sub bx,2
+				loop placeupforrightfruit
+			
+			jmp continuetomoveright
+			
+		checkdownforrightfruit:
+			cmp di,-160
+			jne checkleftforrightfruit
+			mov cx,4
+			mov ah,0x06
+			mov al,'-'
+			mov bx,6
+			placedownforrightfruit:
+				add si,160
+				mov word[es:si],ax
+				mov [cs:screenpositon+bx],si
+				sub bx,2
+				loop placedownforrightfruit
+				
+			jmp continuetomoveright
+			
+			
+		checkleftforrightfruit:
+			cmp di,2
+			jne checkrightforrightfruit
+			mov cx,4
+			mov ah,0x06
+			mov al,'-'
+			mov bx,6
+			placeleftforrightfruit:
+				sub si,2
+				mov word[es:si],ax
+				mov [cs:screenpositon+bx],si
+				sub bx,2
+				loop placeleftforrightfruit
+				
+			jmp continuetomoveright
+			
+		checkrightforrightfruit:
+			mov cx,4
+			mov ah,0x06
+			mov al,'-'
+			mov bx,6
+			placerightforrightfruit:
+				add si,2
+				mov word[es:si],ax
+				mov [cs:screenpositon+bx],si
+				sub bx,2
+				loop placerightforrightfruit
+
+			
+
+	continuetomoveright:	
+		mov word cx,[cs:lenght]
+		dec cx
+		mov word bx,[cs:lenght]
+		dec bx
+		
+		mov word si,[cs:lenght]
+		shl si,1
+		sub si,2
+		
+		mov ah,0x06
+		
+		mov di,[cs:screenpositon+si] 
+			
+		mov al,[cs:snake+bx] 
+		mov word[es:di+2],ax
+		add word[cs:screenpositon+si],2
+		loopformovingright:
+			mov bx,[cs:screenpositon+si-2]
+			
+			mov ax,[es:bx]
+			mov word[es:di],ax
+			
+			mov [cs:screenpositon+si-2],di
+			
+			mov di,bx
+			sub si,2
+			loop loopformovingright
+			
+		mov dx,0x0720
+		mov word[es:di],dx
+
+		mov word[cs:orientation],1
+			
+		endofmovright:
+			popa
+			ret
+	
+movup:
+	pusha
+	
+	mov ax,0xb800
+	mov es,ax
+	
+	cmp word[cs:orientation],4
+	je endofmovingup
+	
+	mov word si,[cs:lenght]
+	shl si,1
+	sub si,2
+	colissioncheckup:
+		mov ah,0x09
+		mov al,'$'
+		mov di,[cs:screenpositon+si] 
+		cmp ax,[es:di-160]
+		jne colissioncheckupitself
+		call sound
+		call reset
+		jmp endofmovingup
+		
+	colissioncheckupitself:
+		mov ah,0x06
+		mov al,'-'
+		mov di,[cs:screenpositon+si] 
+		cmp ax,[es:di-160]
+		jne colissioncheckupfruit
+		call sound
+		call reset
+		jmp endofmovingup
+	
+	colissioncheckupfruit:
+		mov ah,0x04
+		
+		checkfruit1forup:
+			cmp byte[cs:fruitnumber],1
+			jne checkfruit2forup
+			mov al,'@'
+			
+		checkfruit2forup:
+			cmp byte[cs:fruitnumber],2
+			jne checkfruit3forup
+			mov al,'&'
+			
+		checkfruit3forup:
+			cmp byte[cs:fruitnumber],3
+			jne checkfruit4forup
+			mov al,'%'
+			
+		checkfruit4forup:
+			cmp byte[cs:fruitnumber],4
+			jne continuecolissioncheckupfruit
+			mov al,'#'
+			
+		continuecolissioncheckupfruit:
+		mov di,[cs:screenpositon+si] 
+		cmp ax,[es:di-160]
+		jne continuetomoveup
+		call sound
+		inc word[cs:score]
+		call generaterandom
+		call printfruit
+		call extendlength
+		
+		
+		mov si,[cs:screenpositon+8] 
+		mov di,[cs:screenpositon+10] 
+			
+		sub di,si
+
+		checkupforupfruit:
+			cmp di,160
+			jne checkdownforupfruit
+			mov cx,4
+			mov ah,0x06
+			mov al,'-'
+			mov bx,6
+			placeupforupfruit:
+				sub si,160
+				mov word[es:si],ax
+				mov [cs:screenpositon+bx],si
+				sub bx,2
+				loop placeupforupfruit
+			
+			jmp continuetomoveup
+			
+		checkdownforupfruit:
+			cmp di,-160
+			jne checkleftforupfruit
+			mov cx,4
+			mov ah,0x06
+			mov al,'-'
+			mov bx,6
+			placedownforupfruit:
+				add si,160
+				mov word[es:si],ax
+				mov [cs:screenpositon+bx],si
+				sub bx,2
+				loop placedownforupfruit
+				
+			jmp continuetomoveup
+			
+		checkleftforupfruit:
+			cmp di,2
+			jne checkrightforupfruit
+			mov cx,4
+			mov ah,0x06
+			mov al,'-'
+			mov bx,6
+			placeleftforupfruit:
+				sub si,2
+				mov word[es:si],ax
+				mov [cs:screenpositon+bx],si
+				sub bx,2
+				loop placeleftforupfruit
+				
+			jmp continuetomoveup
+			
+		checkrightforupfruit:
+			mov cx,4
+			mov ah,0x06
+			mov al,'-'
+			mov bx,6
+			placerightforupfruit:
+				add si,2
+				mov word[es:si],ax
+				mov [cs:screenpositon+bx],si
+				sub bx,2
+				loop placerightforupfruit
+	
+	continuetomoveup:
+		mov word cx,[cs:lenght]
+		dec cx
+		mov word bx,[cs:lenght]
+		dec bx
+		
+		mov word si,[cs:lenght]
+		shl si,1
+		sub si,2
+		
+		mov ah,0x06
+		
+		mov di,[cs:screenpositon+si] 
+			
+		mov al,[cs:snake+bx] 
+		mov word[es:di-160],ax
+		sub word[cs:screenpositon+si],160
+		loopformovingup:
+			mov bx,[cs:screenpositon+si-2]
+			
+			mov ax,[es:bx]
+			mov word[es:di],ax
+			
+			mov [cs:screenpositon+si-2],di
+			
+			mov di,bx
+			sub si,2
+			loop loopformovingup
+			
+		mov dx,0x0720
+		mov word[es:di],dx
+		mov word[cs:orientation],2
+	endofmovingup:
+		popa
+		ret
+	
+movdown:
+	pusha
+	
+	mov ax,0xb800
+	mov es,ax
+	
+	cmp word[cs:orientation],2
+	je endofmovingdown
+	
+	mov word si,[cs:lenght]
+	shl si,1
+	sub si,2
+	colissioncheckdown:
+		mov ah,0x09
+		mov al,'$'
+		mov di,[cs:screenpositon+si] 
+		cmp ax,[es:di+160]
+		jne colissioncheckdownitself
+		call sound
+		call reset
+		jmp endofmovingdown
+	
+	colissioncheckdownitself:
+		mov ah,0x06
+		mov al,'-'
+		mov di,[cs:screenpositon+si] 
+		cmp ax,[es:di+160]
+		jne colissioncheckdownfruit
+		call sound
+		call reset
+		jmp endofmovingdown
+		
+		
+	colissioncheckdownfruit:
+		mov ah,0x04
+		
+	checkfruit1fordown:
+		cmp byte[cs:fruitnumber],1
+		jne checkfruit2fordown
+		mov al,'@'
+		
+	checkfruit2fordown:
+		cmp byte[cs:fruitnumber],2
+		jne checkfruit3fordown
+		mov al,'&'
+		
+	checkfruit3fordown:
+		cmp byte[cs:fruitnumber],3
+		jne checkfruit4fordown
+		mov al,'%'
+		
+	checkfruit4fordown:
+		cmp byte[cs:fruitnumber],4
+		jne continuecolissioncheckdownfruit
+		mov al,'#'
+		
+		continuecolissioncheckdownfruit:
+		mov di,[cs:screenpositon+si] 
+		cmp ax,[es:di+160]
+		jne continuetomovedown
+		call sound
+		inc word[cs:score]
+		call generaterandom
+		call printfruit
+		call extendlength
+		
+		mov si,[cs:screenpositon+8] 
+		mov di,[cs:screenpositon+10] 
+			
+		sub di,si
+
+		checkupfordownfruit:
+			cmp di,160
+			jne checkdownfordownfruit
+			mov cx,4
+			mov ah,0x06
+			mov al,'-'
+			mov bx,6
+			placeupfordownfruit:
+				sub si,160
+				mov word[es:si],ax
+				mov [cs:screenpositon+bx],si
+				sub bx,2
+				loop placeupfordownfruit
+			
+			jmp continuetomovedown
+			
+		checkdownfordownfruit:
+			cmp di,-160
+			jne checkleftfordownfruit
+			mov cx,4
+			mov ah,0x06
+			mov al,'-'
+			mov bx,6
+			placedownfordownfruit:
+				add si,160
+				mov word[es:si],ax
+				mov [cs:screenpositon+bx],si
+				sub bx,2
+				loop placedownfordownfruit
+				
+			jmp continuetomovedown
+			
+		checkleftfordownfruit:
+			cmp di,2
+			jne checkrightfordownfruit
+			mov cx,4
+			mov ah,0x06
+			mov al,'-'
+			mov bx,6
+			placeleftfordownfruit:
+				sub si,2
+				mov word[es:si],ax
+				mov [cs:screenpositon+bx],si
+				sub bx,2
+				loop placeleftfordownfruit
+				
+			jmp continuetomovedown
+			
+		checkrightfordownfruit:
+			mov cx,4
+			mov ah,0x06
+			mov al,'-'
+			mov bx,6
+			placerightfordownfruit:
+				add si,2
+				mov word[es:si],ax
+				mov [cs:screenpositon+bx],si
+				sub bx,2
+				loop placerightfordownfruit
+		
+		
+	
+	continuetomovedown:
+	
+		mov word cx,[cs:lenght]
+		dec cx
+		mov word bx,[cs:lenght]
+		dec bx
+		
+		mov word si,[cs:lenght]
+		shl si,1
+		sub si,2
+		
+		mov ah,0x06
+		
+		mov di,[cs:screenpositon+si] 
+			
+		mov al,[cs:snake+bx] 
+		mov word[es:di+160],ax
+		add word[cs:screenpositon+si],160
+		loopformovingdown:
+			mov bx,[cs:screenpositon+si-2]
+			
+			mov ax,[es:bx]
+			mov word[es:di],ax
+			
+			mov [cs:screenpositon+si-2],di
+			
+			mov di,bx
+			sub si,2
+			loop loopformovingdown
+			
+		mov dx,0x0720
+		mov word[es:di],dx
+	mov word[cs:orientation],4
+	endofmovingdown:
+		popa
+		ret
+	
+movleft:
+	pusha
+	
+	mov ax,0xb800
+	mov es,ax
+	
+	cmp word[cs:orientation],1
+	je	endofmovingleft
+	mov word si,[cs:lenght]
+	shl si,1
+	sub si,2
+	colissioncheckleft:
+		mov ah,0x09
+		mov al,'$'
+		mov di,[cs:screenpositon+si]
+		cmp ax,[es:di-2]
+		jne colissioncheckleftitself
+		call sound
+		call reset
+		jmp endofmovingleft
+		
+	colissioncheckleftitself:
+		mov ah,0x06
+		mov al,'-'
+		mov di,[cs:screenpositon+si] 
+		cmp ax,[es:di-2]
+		jne colissioncheckleftfruit
+		call sound
+		call reset
+		jmp endofmovingleft
+	
+	colissioncheckleftfruit:
+		mov ah,0x04
+		
+	checkfruit1forleft:
+		cmp byte[cs:fruitnumber],1
+		jne checkfruit2forleft
+		mov al,'@'
+		
+	checkfruit2forleft:
+		cmp byte[cs:fruitnumber],2
+		jne checkfruit3forleft
+		mov al,'&'
+		
+	checkfruit3forleft:
+		cmp byte[cs:fruitnumber],3
+		jne checkfruit4forleft
+		mov al,'%'
+		
+	checkfruit4forleft:
+		cmp byte[cs:fruitnumber],4
+		jne continuecolissioncheckleftfruit
+		mov al,'#'
+		
+		continuecolissioncheckleftfruit:
+		mov di,[cs:screenpositon+si] 
+		cmp ax,[es:di-2]
+		jne continuetomoveleft
+		call sound
+		inc word[cs:score]
+		call generaterandom
+		call printfruit
+		call extendlength
+		
+		
+		mov si,[cs:screenpositon+8] 
+		mov di,[cs:screenpositon+10] 
+			
+		sub di,si
+
+		checkupforleftfruit:
+			cmp di,160
+			jne checkdownforleftfruit
+			mov cx,4
+			mov ah,0x06
+			mov al,'-'
+			mov bx,6
+			placeupforleftfruit:
+				sub si,160
+				mov word[es:si],ax
+				mov [cs:screenpositon+bx],si
+				sub bx,2
+				loop placeupforleftfruit
+			
+			jmp continuetomoveleft
+			
+		checkdownforleftfruit:
+			cmp di,-160
+			jne checkleftforleftfruit
+			mov cx,4
+			mov ah,0x06
+			mov al,'-'
+			mov bx,6
+			placedownforleftfruit:
+				add si,160
+				mov word[es:si],ax
+				mov [cs:screenpositon+bx],si
+				sub bx,2
+				loop placedownforleftfruit
+				
+			jmp continuetomoveleft
+			
+		checkleftforleftfruit:
+			cmp di,2
+			jne checkrightforleftfruit
+			mov cx,4
+			mov ah,0x06
+			mov al,'-'
+			mov bx,6
+			placeleftforleftfruit:
+				sub si,2
+				mov word[es:si],ax
+				mov [cs:screenpositon+bx],si
+				sub bx,2
+				loop placeleftforleftfruit
+				
+			jmp continuetomoveleft
+			
+		checkrightforleftfruit:
+			mov cx,4
+			mov ah,0x06
+			mov al,'-'
+			mov bx,6
+			placerightforleftfruit:
+				add si,2
+				mov word[es:si],ax
+				mov [cs:screenpositon+bx],si
+				sub bx,2
+				loop placerightforleftfruit
+		
+	
+	
+	continuetomoveleft:
+		mov word cx,[cs:lenght]
+		dec cx
+		mov word bx,[cs:lenght]
+		dec bx
+		
+		mov word si,[cs:lenght]
+		shl si,1
+		sub si,2
+		
+		mov ah,0x06
+		
+		mov di,[cs:screenpositon+si] 
+			
+		mov al,[cs:snake+bx] 
+		mov word[es:di-2],ax
+		sub word[cs:screenpositon+si],2
+		loopformovingleft:
+			mov bx,[cs:screenpositon+si-2]
+			
+			mov ax,[es:bx]
+			mov word[es:di],ax
+			
+			mov [cs:screenpositon+si-2],di
+			
+			mov di,bx
+			sub si,2
+			loop loopformovingleft
+			
+		mov dx,0x0720
+		mov word[es:di],dx
+	mov word[cs:orientation],3
+	endofmovingleft:
+		popa
+		ret
+	
+timer:
+	pusha
+	inc word[cs:tickcount]
+	inc word[cs:tickcount2]
+	inc word[cs:tickcount3]
+	inc word[cs:tickcount4]
+	inc word[cs:tickcount5]
+	
+	
+	checktickcount4:
+		cmp word[cs:tickcount4],76
+		jne checktickcount5
+		mov word[cs:tickcount4],4
+	checktickcount5:
+		cmp word[cs:tickcount5],22
+		jne check20seconds
+		mov word[cs:tickcount5],4
+		
+	check20seconds:
+		cmp word[cs:tickcount3],364
+		jne	checklive
+		call increasespeed
+		mov word[cs:tickcount3],0
+		
+	
+	checklive:
+		cmp byte[cs:lives],0
+		je endoftimer
+		
+	checkstage1:
+		cmp word[cs:score],5
+		jne checkstage2
+		inc word[cs:score]
+		inc byte[cs:stage]
+		call resetwithoutlivesandtime
+		call printhurdel1
+		call printfruit
+	
+	checkstage2:
+		cmp word[cs:score],10
+		jne checkminitues
+		inc word[cs:score]
+		inc byte[cs:stage]
+		call resetwithoutlivesandtime
+		call printhurdel2
+		call printfruit
+	
+	checkminitues:
+		cmp word[cs:seconds],0
+		jne checkseconds
+		cmp byte[cs:minitues],0
+		jne checkremaining
+		call reset
+		jmp	endoftimer
+		checkremaining:
+			dec byte[cs:minitues]
+			mov byte[cs:seconds],60
+			jmp checktickcount
+	
+	checkseconds:
+	
+		lableforendofgame:
+			cmp word[cs:lenght],240    ;;;this should be 240;;;;this is the line to end game at a given length
+			jne checkremainingseconds
+			call endofgamescreen
+			mov byte[cs:lives],0
+			jmp endoftimer
+		checkremainingseconds:
+			cmp word[cs:tickcount2],18
+			jne checktickcount
+			dec word[cs:seconds]
+			mov byte[cs:tickcount2],0
+	
+	call printtime
+	call printscore
+	call printstage
+	
+	checktickcount:
+		mov ax,[cs:speed]
+		cmp word[cs:tickcount],ax
+		jng endoftimer
+		
+	;call sound 
+	
+	ifright:
+		cmp word[cs:orientation],1
+		jne ifup
+		call movright
+		mov word[cs:tickcount],0
+		
+	ifup:
+		cmp word[cs:orientation],2
+		jne ifleft
+		call movup
+		mov word[cs:tickcount],0
+		
+	ifleft:
+		cmp word[cs:orientation],3
+		jne ifdown
+		call movleft
+		mov word[cs:tickcount],0
+		
+		
+	ifdown:
+		cmp word[cs:orientation],4
+		jne endoftimer
+		call movdown
+		mov word[cs:tickcount],0
+	
+	
+	endoftimer:
+		mov al, 0x20
+		out 0x20, al 
+		popa
+		iret
+kbisr:
+	pusha
+	
+	cmp byte[cs:lives],0
+	je endofkbisr
+	
+	in al,0x60
+	cmp al,0x4D	
+	jne compareUp
+	call movright
+	jmp endofkbisr
+	
+compareUp:
+	cmp al,0x48 
+	jne compareDown
+	call movup
+	jmp endofkbisr
+compareDown:
+	cmp al,0x50
+	jne compareLeft
+	call movdown
+	jmp endofkbisr
+compareLeft:
+	cmp al,0x4B
+	jne endofkbisr
+	call movleft
+endofkbisr:
+		mov al,0x20
+		out 0x20,al
+		
+		popa
+		iret
+
+start:
+  
+	call clrscr
+	call printboarders
+	call initializesnake
+	call printsnake
+	call printlives
+	call printtime
+	call printscore
+	call printstage
+	;call generaterandom
+	;call printhurdel2
+	
+	
+	mov ax,0xb800
+	mov es,ax
+	mov ah,0x04
+	mov al,'@'
+	
+	mov [es:2060],ax
+	
+	mov word[cs:orientation],1
+	
+	xor ax, ax
+	mov es, ax 
+	cli 
+	mov word [es:9*4], kbisr
+	mov [es:9*4+2], cs 
+	sti 
+	
+	xor ax, ax
+	mov es, ax 
+	cli 
+	mov word [es:8*4], timer
+	mov [es:8*4+2], cs 
+	sti
+	
+	
+	
+exit:	
+	
+	mov ax, 0x4c00 
+	int 0x21
